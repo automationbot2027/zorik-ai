@@ -1,21 +1,18 @@
-import os, logging, threading
+import os, logging, threading, time
 from flask import Flask
 import telebot
 import google.generativeai as genai
 
-# Zorik AI - Custom Agent
 AGENT_NAME = "Zorik AI"
-
 TELE_TOKEN = os.getenv("TELEGRAM_TOKEN")
 GEMINI_KEY = os.getenv("GEMINI_KEY")
 
 logging.basicConfig(level=logging.INFO)
-
-# --- Render Free Web Service ke liye Flask (PC off pe bhi online rahega) ---
 flask_app = Flask(__name__)
+
 @flask_app.route('/')
 def home():
-    return f"{AGENT_NAME} Alive - Cloud Brain Online! PC status will sync when PC is ON."
+    return f"{AGENT_NAME} Alive - Cloud Brain Online! PC OFF pe bhi online."
 
 def run_flask():
     port = int(os.environ.get("PORT", 10000))
@@ -23,38 +20,41 @@ def run_flask():
 
 threading.Thread(target=run_flask, daemon=True).start()
 
-# --- Gemini + Telegram ---
 genai.configure(api_key=GEMINI_KEY)
 model = genai.GenerativeModel("gemini-1.5-flash")
 bot = telebot.TeleBot(TELE_TOKEN, threaded=False)
 
 @bot.message_handler(commands=['start'])
 def start(m):
-    bot.send_message(m.chat.id, f"Assalam-o-Alaikum! Main {AGENT_NAME} hun.\n\nCommands:\n/status - app status\n/research [topic] - deep research + save\n/shutdown - PC shutdown (jab PC ON ho)\n\nBol ke bhi control kar sakte ho jab PC ON ho.")
+    try:
+        bot.reply_to(m, f"Assalam-o-Alaikum! Main {AGENT_NAME} hun.\n\nCommands:\n/status - app status\n/research [topic] - deep research + save\n/shutdown - PC shutdown (jab PC ON ho)\n\nBol ke bhi control kar sakte ho jab PC ON ho.")
+    except Exception as e: print(e)
 
 @bot.message_handler(commands=['status'])
 def status_cmd(m):
-    bot.send_message(m.chat.id, f"{AGENT_NAME} Status:\nCloud Brain: ONLINE (Render Free)\nPC Agent: Checking... (PC ON hoga to sync hoga)\nGoal: 500k users by 2026\nLast 7 days: 5000+ downloads")
+    try:
+        bot.reply_to(m, f"{AGENT_NAME} Status:\nCloud Brain: ONLINE ✅ (Render Free)\nPC Agent: OFF - Jab PC ON karoge to sync hoga\nGoal: 500k users by 2026\nLast 7 days: 5000+ downloads - 6 month target")
+    except Exception as e: print(f"Status err: {e}")
 
 @bot.message_handler(commands=['research'])
 def research_cmd(m):
-    topic = m.text.replace('/research','').strip() or "5 lakh users growth strategies"
-    prompt = f"You are {AGENT_NAME}, expert growth strategist. Deep research on: {topic}. Give 5 actionable 0$ strategies, save format ready for desktop file. Roman Urdu mix."
+    topic = m.text.replace('/research','').strip() or "5 lakh users growth"
     try:
-        res = model.generate_content(prompt).text
-        bot.send_message(m.chat.id, f"🔍 {AGENT_NAME} Research Complete:\n\n{res}\n\n[Cloud pe save ho gaya, PC ON hote hi Desktop pe auto-save hoga]")
-    except Exception as e:
-        bot.send_message(m.chat.id, f"Error: {e}")
+        res = model.generate_content(f"You are {AGENT_NAME}. Deep research on {topic} in Roman Urdu, 5 points, 0$ budget.").text
+        bot.reply_to(m, f"🔍 {AGENT_NAME} Research:\n\n{res[:4000]}")
+    except Exception as e: bot.reply_to(m, f"Research Error: {e}")
 
 @bot.message_handler(func=lambda m: True)
 def all_msg(m):
     try:
-        r = model.generate_content(f"You are {AGENT_NAME}. User:{m.text}. Reply helpful Roman Urdu.").text
-        bot.send_message(m.chat.id, r)
-    except Exception as e:
-        bot.send_message(m.chat.id, f"Error: {e}")
+        r = model.generate_content(f"You are {AGENT_NAME}. User:{m.text}. Reply Roman Urdu helpful.").text
+        bot.reply_to(m, r[:4000])
+    except Exception as e: bot.reply_to(m, f"Error: {e}")
 
 if __name__ == "__main__":
     bot.remove_webhook()
-    print(f"{AGENT_NAME} Started - Flask on PORT + Telegram Polling")
-    bot.infinity_polling()
+    time.sleep(2)
+    print(f"{AGENT_NAME} Started")
+    while True:
+        try: bot.infinity_polling(timeout=60, long_polling_timeout=60)
+        except Exception as e: print(f"Polling restart: {e}"); time.sleep(5)
