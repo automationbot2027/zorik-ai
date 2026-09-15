@@ -63,3 +63,11 @@ if __name__ == "__main__":
     while True:
         try: bot.infinity_polling(timeout=60, long_polling_timeout=60)
         except Exception as e: print(f"Polling restart: {e}"); time.sleep(5)
+from flask import request, jsonify
+
+@flask_app.route('/chat', methods=['POST'])
+def chat():
+    data = request.json
+    user_message = data.get('message', '')
+    ai_response = model.generate_content(user_message)
+    return jsonify({'response': ai_response.text})
