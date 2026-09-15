@@ -2,6 +2,7 @@ import os, logging, threading, time
 from flask import Flask
 import telebot
 import google.generativeai as genai
+from flask import request, jsonify
 
 AGENT_NAME = "Zorik AI"
 TELE_TOKEN = os.getenv("TELEGRAM_TOKEN")
@@ -63,7 +64,6 @@ if __name__ == "__main__":
     while True:
         try: bot.infinity_polling(timeout=60, long_polling_timeout=60)
         except Exception as e: print(f"Polling restart: {e}"); time.sleep(5)
-from flask import request, jsonify
 
 @flask_app.route('/chat', methods=['POST'])
 def chat():
