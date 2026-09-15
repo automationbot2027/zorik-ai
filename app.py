@@ -10,6 +10,11 @@ GEMINI_KEY = os.getenv("GEMINI_KEY")
 logging.basicConfig(level=logging.INFO)
 flask_app = Flask(__name__)
 
+@flask_app.after_request
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = '*'
+    return response
 @flask_app.route('/')
 def home():
     return f"{AGENT_NAME} Alive - Cloud Brain Online! PC OFF pe bhi online."
